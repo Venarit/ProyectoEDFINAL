@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 
 struct generos{
@@ -29,6 +30,15 @@ struct elem_lista{
   struct generos genero;
   struct elem_lista *sig;
 };
+
+struct colaReproduccion
+{
+  struct canciones cancion;
+  struct artistas artista;
+  struct colaReproduccion *sig;
+  struct colaReproduccion *ant;
+};
+
 
 void impresion(struct elem_lista *inicio)
 {
@@ -79,33 +89,84 @@ int insertarArtistas (struct elem_lista *inicio){
     insertarArtistas(inicio -> sig);
   }
 }
-//lista ligada o cola?
+//lista ligada o cola?^^^^
+
+  int agregarACola(struct colaReproduccion *cola,struct elem_lista *lista, bool reproducir)
+  {
+    if (reproducir)
+    {
+      //Aqui se tiene que limpiar la cola
+      
+      
+    }
+    //Agregar a la estructura cola todo lo que hay en lista
+    struct colaReproduccion *temp;
+  if (cola -> sig == NULL)
+  {
+    temp = (struct colaReproduccion *)calloc(1,sizeof(struct colaReproduccion));
+    cola -> sig = temp;
+    temp ->  cancion = lista -> cancion;
+    temp -> artista = lista -> artista;
+    temp -> ant = cola;
+    if (lista->sig != NULL)
+    {
+      agregarACola(cola -> sig, lista->sig, reproducir);
+    }
+    return 1; 
+  } else {
+    agregarACola(cola -> sig, lista, reproducir);
+  }
+    
+  }
+  void estadoDeCola (struct colaReproduccion *inicioCola)
+  {
+      struct colaReproduccion *temp;
+      temp = inicioCola;
+      while (temp){
+      printf("< %s >\n",temp -> cancion.can);
+      printf("- %s -\n",temp -> artista.art);
+      printf("\n");
+      temp = temp -> sig;
+    }
+    int x;
+    scanf("%i",&x);
+  }
 
 int main (){
     struct elem_lista *lista;
     struct canciones *cancion;
     struct elem_lista *listaTemporal;
+    struct colaReproduccion *cola;
+  
     listaTemporal  = (struct elem_lista *) calloc(1, sizeof(*listaTemporal));
+  
     FILE *ptr;
     FILE *ptr2;
     FILE *ptr3;
+  
     lista  = (struct elem_lista *) calloc(1, sizeof(*lista));
     cancion = (struct canciones *) calloc(1, sizeof(*cancion));
+    cola = (struct colaReproduccion *) calloc(1, sizeof(*cola));
+  
     //strcpy(cancion->can, "Test");
     //insertarLista(lista, *cancion);
     //impresion(lista);
     int opcionSwitch,opcionGeneros;
     char opcionGeneros2,opcionReproductor,opcionCanciones;
-    system("clear");
-    printf("Bienvenido a SpotiUV\n");
-    printf("---------------------\n");
-    printf("1.  Explorar Generos\n");
-    printf("2.  Explorar Canciones\n");
-    printf("3.  Reproductor\n");
-    printf("4.  Salir\n\n");
-    printf("Selecciona una opcion: ");
-    scanf("%i",&opcionSwitch);
-
+    
+    
+    //poner do while para menu para quitar mains
+  while(opcionSwitch != 4){
+        system("clear");
+        printf("Bienvenido a SpotiUV\n");
+        printf("---------------------\n");
+        printf("1.  Explorar Generos\n");
+        printf("2.  Explorar Canciones\n");
+        printf("3.  Reproductor\n");
+        printf("4.  Salir\n\n");
+        printf("5. temporal");
+        printf("Selecciona una opcion: ");
+        scanf("%i",&opcionSwitch);
         switch (opcionSwitch){
         case 1: 
           {
@@ -149,8 +210,8 @@ int main (){
                 fread(&est,sizeof(est),1,ptr);
                if( est.id_gen == opgen)
                {
-                 system("clear");
-                 printf("\n----------%s----------\n\n", est.gen);
+                 
+                
 
                  //MOSTRAR CANCIONES SIN ARTISTA(todavia)
                  ptr2=fopen("Registrocan.txt","ab+");
@@ -173,15 +234,9 @@ int main (){
                        
                      }
                    }
-                 impresion(listaTemporal->sig);
-
-                 printf("\n------------------------------------");
-                 printf("\np.  Regresar al menu principal.");
-                 printf("\nq.  Agregar a la cola de reproducción.");
-                 printf("\nr.  Reproducir toda esta lista.");
-                 printf("\ns.  Escoger una canción.");
-                 printf("\n------------------------------------");
-                 printf("\nSeleccione una opción: ");
+                 
+                  
+                 
                  
                  break;
                }
@@ -189,16 +244,50 @@ int main (){
               if(opgen!=est.id_gen){
                  printf("Genero no encontrado.\n");
               }
+              //
               
-  						break;
+              char opc;
+              while (opc != 'p'){
+              system("clear");  
+              printf("\n----------%s----------\n\n", est.gen);
+              impresion(listaTemporal->sig);
+              printf("\n--------------------------------------");
+              printf("\np.  Regresar al menu principal.");
+              printf("\nq.  Agregar a la cola de reproducción.");
+              printf("\nr.  Reproducir toda esta lista.");
+              printf("\ns.  Escoger una canción.");
+              printf("\n--------------------------------------");
+              printf("\nSeleccione una opción: ");
+              scanf( "%s", &opc);
+  
+              switch(opc)
+              {     
+                case 'q': agregarACola( cola, listaTemporal->sig, false );
+                          estadoDeCola(cola->sig);
+                  break;
+                case 'r':
+                  printf("\nReproduciendo todas las canciones de lista...");
+                  break;
+                case 's':
+                  printf("\nSeleccione una canción: ");
+                  break;
+                default:
+                  printf("\nOpción no valida");
+                  break;
+                     
+              }
             }
+              break;
+              }
+
+            
   						
   					case 2:
-  						main();
+  						
   						break;
   					default:
-  						printf("\nOPCION NO VALIDA");
-  						main();
+  						//printf("\nOPCION NO VALIDA");
+  						
   						break;
           }
             break;
@@ -227,7 +316,7 @@ int main (){
                 
                 switch (opcionCanciones)
                 {
-                case 'p': main();
+                case 'p': 
                     break;
                 case 'a': printf("10 Canciones anteriores...");
                     break;
@@ -282,9 +371,13 @@ int main (){
 
         case 4: printf("Saliendo...");
             break;
+          //case 5 sirve para probar, no borrar porfavor
+          case 5: printf("imprimiendo cola repro...");
+            estadoDeCola(cola->sig);
+            break;
         default: printf("Opcion Invalida");
             break;
         }
-    
+    }
 return 0; 
 }
