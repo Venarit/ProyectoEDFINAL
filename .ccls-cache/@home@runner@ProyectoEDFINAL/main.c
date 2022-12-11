@@ -96,7 +96,7 @@ int insertarArtistas (struct elem_lista *inicio){
     if (reproducir)
     {
       //Aqui se tiene que limpiar la cola
-      
+      cola -> sig = NULL;
       
     }
     //Agregar a la estructura cola todo lo que hay en lista
@@ -220,7 +220,7 @@ int main (){
                    main();
                    break;
                  }
-
+                  listaTemporal  = (struct elem_lista *) calloc(1,sizeof(*listaTemporal));
                  while(!feof(ptr2))
                    {
                      fread(&est_can,sizeof(est_can),1,ptr2);
@@ -265,8 +265,8 @@ int main (){
                 case 'q': agregarACola( cola, listaTemporal->sig, false );
                           estadoDeCola(cola->sig);
                   break;
-                case 'r':
-                  printf("\nReproduciendo todas las canciones de lista...");
+                case 'r': agregarACola( cola, listaTemporal->sig, true );
+                          estadoDeCola(cola->sig);
                   break;
                 case 's':
                   printf("\nSeleccione una canción: ");
