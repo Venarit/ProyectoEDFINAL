@@ -23,13 +23,80 @@ struct canciones{
 	int r_art;
 }est_can;
 
+struct elem_lista{
+  struct canciones cancion;
+  struct artistas artista;
+  struct generos genero;
+  struct elem_lista *sig;
+};
+
+void impresion(struct elem_lista *inicio)
+{
+  struct elem_lista *temp;
+  temp = inicio;
+  while (temp){
+    printf("< %s >\n",temp -> cancion.can);
+    printf("- %s -\n",temp -> artista.art);
+    printf("\n");
+    temp = temp -> sig;
+    
+  }
+}
+int insertarLista (struct elem_lista *lista,struct canciones cancion){
+  struct elem_lista *temp;
+  if (lista -> sig == NULL)
+  {
+    temp = (struct elem_lista *)calloc(1,sizeof(struct elem_lista));
+    lista -> sig = temp;
+    temp ->  cancion = cancion;
+    return 1;  
+  } else {
+    insertarLista(lista -> sig, cancion);
+  }
+}
+//cola
+int insertarArtistas (struct elem_lista *inicio){
+  if(!inicio){
+    return;
+  }
+  inicio -> cancion.r_art;
+    
+  FILE *ptr;
+  ptr=fopen("Registroart.txt","ab+");
+  if (ptr == NULL){
+    return;
+  }
+
+  while(!feof(ptr)){
+    
+      fread(&est_art,sizeof(est_art),1,ptr);
+    
+      if(inicio->cancion.r_art == est_art.id_art){
+        inicio -> artista = est_art;
+      }
+  }
+  if(inicio -> sig != NULL){
+    insertarArtistas(inicio -> sig);
+  }
+}
+//lista ligada o cola?
+
 int main (){
+    struct elem_lista *lista;
+    struct canciones *cancion;
+    struct elem_lista *listaTemporal;
+    listaTemporal  = (struct elem_lista *) calloc(1, sizeof(*listaTemporal));
     FILE *ptr;
     FILE *ptr2;
     FILE *ptr3;
+    lista  = (struct elem_lista *) calloc(1, sizeof(*lista));
+    cancion = (struct canciones *) calloc(1, sizeof(*cancion));
+    //strcpy(cancion->can, "Test");
+    //insertarLista(lista, *cancion);
+    //impresion(lista);
     int opcionSwitch,opcionGeneros;
     char opcionGeneros2,opcionReproductor,opcionCanciones;
-  system("clear");
+    system("clear");
     printf("Bienvenido a SpotiUV\n");
     printf("---------------------\n");
     printf("1.  Explorar Generos\n");
@@ -83,7 +150,7 @@ int main (){
                if( est.id_gen == opgen)
                {
                  system("clear");
-                 printf("\n----------%s----------\n", est.gen);
+                 printf("\n----------%s----------\n\n", est.gen);
 
                  //MOSTRAR CANCIONES SIN ARTISTA(todavia)
                  ptr2=fopen("Registrocan.txt","ab+");
@@ -98,10 +165,23 @@ int main (){
                      fread(&est_can,sizeof(est_can),1,ptr2);
                      if(opgen == est_can.r_gen)
                      {
-                       printf("\n%s",est_can.can);
+                       //printf("\n<%s>",est_can.can);
+                       
+                       insertarLista(listaTemporal,est_can);
+                       insertarArtistas(listaTemporal);
+
+                       
                      }
                    }
+                 impresion(listaTemporal->sig);
 
+                 printf("\n------------------------------------");
+                 printf("\np.  Regresar al menu principal.");
+                 printf("\nq.  Agregar a la cola de reproducción.");
+                 printf("\nr.  Reproducir toda esta lista.");
+                 printf("\ns.  Escoger una canción.");
+                 printf("\n------------------------------------");
+                 printf("\nSeleccione una opción: ");
                  
                  break;
                }
@@ -206,5 +286,5 @@ int main (){
             break;
         }
     
-return 0;
+return 0; 
 }
