@@ -36,6 +36,13 @@ struct elem_lista
   struct elem_lista *sig;
 };
 
+struct listaGenero
+{
+  struct generos genero;
+  struct elem_lista *canciones;
+  struct listaGenero *sig;
+};
+
 struct nodoCola{
   struct canciones cancion;
   struct artistas artista;
@@ -46,6 +53,13 @@ struct colaReproduccion{
   struct nodoCola *inicio;
   struct nodoCola *final;
 }Cola;
+
+void impresion10(struct elem_lista *inicio);
+int insertarLista(struct elem_lista **lista, struct canciones cancion);
+int insertarArtistas(struct elem_lista *inicio);
+int insertarGenero(struct listaGenero **lista, struct generos Genero);
+int vaciarLista(struct elem_lista **lista);
+void impresionGeneros(struct listaGenero *lista);
 
 int insertarCola(struct colaReproduccion *c, struct elem_lista *lista)
 {
@@ -127,8 +141,6 @@ int vaciarCola(struct colaReproduccion *cola){
 }
 
 
-int vaciarLista(struct elem_lista **lista);
-
 //Funcion auxiliar para la impresion de los pares de elementos de Cancion, Artista que se encuentren en una lista
 void impresion(struct elem_lista *inicio)
 {
@@ -141,6 +153,22 @@ void impresion(struct elem_lista *inicio)
     printf("- %s -\n",temp -> artista.art);
     printf("\n");
     temp = temp -> sig;   
+  }
+}
+
+void impresion10(struct elem_lista *inicio)
+{
+  struct elem_lista *temp;
+  temp = inicio;
+  int i=0;
+  while (temp && i<10)
+  {
+    printf("$%d\n", temp->cancion.id_cancion);
+    printf("< %s >\n",temp -> cancion.can);
+    printf("- %s -\n",temp -> artista.art);
+    printf("\n");
+    temp = temp -> sig;   
+    i++;
   }
 }
 
@@ -178,6 +206,41 @@ int insertarLista (struct elem_lista **lista,struct canciones cancion)
         ultimo->sig = temp;
         return 1;
     }
+}
+
+int insertarListaCompleta(struct elem_lista **lista,struct canciones cancion)
+{
+  FILE *ptr;
+  ptr=fopen("Registrocan.txt","ab+");
+  if (ptr == NULL)
+    {
+      return 0;
+    }
+  while(!feof(ptr))
+    {
+      fread(&est_can,sizeof(est_can),1,ptr);
+      struct elem_lista *temp, *ultimo;
+      if((*lista) == NULL){
+          temp = (struct elem_lista *)calloc(1,sizeof(struct elem_lista));
+          temp->cancion = cancion;
+          *lista =  temp;
+          return 1;  
+      } else {
+          ultimo = (*lista);
+          while (ultimo->sig != NULL)
+          {
+              ultimo = ultimo->sig;
+          
+            
+          }
+          temp = (struct elem_lista *)calloc(1,sizeof(struct elem_lista));
+          temp->cancion = cancion;
+          ultimo->sig = temp;
+      }
+    }
+  
+  
+  return 1;
 }
 
 //funcion auxiliar que relaciona las canciones que se encuentran en una lista con la de sus artistas relacionados
@@ -288,6 +351,102 @@ int vaciarLista(struct elem_lista **lista){
     return 1;
 }
 
+void impresionFile10(FILE *fp)
+{
+    //fseek(fp, 0, SEEK_SET);
+    struct elem_lista *listaTemporal=NULL;
+    for (int i = 0; i < 10; i++)
+    {
+        fread(&est_can, sizeof(est_can), 1, fp);
+        if (feof(fp))
+        {
+            fseek(fp, 0, SEEK_END);
+            break;
+        }
+        insertarLista(&listaTemporal, est_can);
+        insertarArtistas(listaTemporal);
+    }
+    impresion10(listaTemporal);
+}
+
+int readGeneros(struct listaGenero **lista){
+  struct listaGenero *temp;
+  struct generos genero;
+  FILE *fp;
+  /*if(!(*lista)){
+    temp = (struct listaGenero *) calloc(1, sizeof(*temp));
+    (*lista) = temp;
+  }*/
+    fp=fopen("Registrogen.txt","rb+");
+      while(fread(&genero,sizeof(est),1,fp))    
+        {
+          if(feof(fp)){
+            return 0;
+          }
+          insertarGenero(lista, genero);
+        }
+}
+
+int insertarGenero(struct listaGenero **lista, struct generos Genero){
+  struct listaGenero *temp, *ultimo;
+    if((*lista) == NULL){
+        temp = (struct listaGenero *)calloc(1,sizeof(struct listaGenero));
+        temp->genero = Genero;
+        *lista =  temp;
+        return 1;  
+    } else {
+        ultimo = (*lista);
+        while (ultimo->sig != NULL)
+        {
+            ultimo = ultimo->sig;
+        }
+        temp = (struct elem_lista *)calloc(1,sizeof(struct elem_lista));
+        temp->genero = Genero;
+        ultimo->sig = temp;
+        return 1;
+    }
+}
+
+void impresionGeneros(struct listaGenero *lista){
+  struct listaGenero *temp;
+  temp = lista;
+  while (temp)
+  {
+    printf("-----------------------------------\n");
+    printf("$%d\n", temp->genero.id_gen);
+    printf("< %s >\n",temp ->genero.gen);
+    printf("-----------------------------------\n");
+    printf("\n");
+
+    impresion(temp->canciones);
+    temp = temp -> sig;   
+  }
+}
+
+int insertarGenerosCanciones(struct listaGenero *lista){
+  struct listaGenero *temp;
+  FILE *fp;
+  temp = lista;
+  int id_gen;
+  fp = fopen("Registrocan.txt","rb+");
+  while (temp)
+  {
+    fseek(fp, 0, SEEK_SET);
+    id_gen = temp->genero.id_gen;
+    while(fread(&est_can,sizeof(est_can),1,fp)){
+      if(feof(fp)){ 
+        break;
+      }
+      if(temp->genero.id_gen == est_can.r_gen){
+        insertarLista(&temp->canciones ,est_can);
+        insertarArtistas(temp->canciones);
+      }
+    }
+    temp = temp -> sig;   
+  }
+  return 1;
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 int main ()
 {
@@ -295,6 +454,7 @@ int main ()
   struct canciones *cancion;
   struct elem_lista *listaTemporal = NULL;
   struct colaReproduccion *cola;
+  struct listaGenero *listaGenero = NULL;
   
   int opcionReproductorint;
   //listaTemporal  = (struct elem_lista *) calloc(1, sizeof(*listaTemporal));
@@ -302,6 +462,7 @@ int main ()
   FILE *ptr;
   FILE *ptr2;
   FILE *ptr3;
+  FILE *fp;
   
   lista  = (struct elem_lista *) calloc(1, sizeof(*lista));
   cancion = (struct canciones *) calloc(1, sizeof(*cancion));
@@ -310,8 +471,11 @@ int main ()
   //strcpy(cancion->can, "Test");
   //insertarLista(lista, *cancion);
   //impresion(lista);
-  int opcionSwitch,opcionGeneros;
-  char opcionGeneros2,opcionReproductor,opcionCanciones;
+  int opcionSwitch,opcionGeneros,opcionCanciones, result, i;
+  char opcionGeneros2,opcionReproductor;
+  fp = fopen("Registrocan.txt", "rb+");
+  readGeneros(&listaGenero);
+  insertarGenerosCanciones(listaGenero);
   
   
   //poner do while para menu para quitar mains
@@ -452,37 +616,130 @@ int main ()
       }      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////              
       case 2: 
       {
-        printf("Lista de canciones\n");
-        printf("1.<Nombre cancion>\n");
-        printf("  <Nombre artista>\n");
-        printf("2.<cancion>\n");
-        printf("  <Nombre artista>\n");
-        printf("Opciones:\n");
-        printf("p: Regresar al menu principal\n");
-        printf("a: 10 Canciones anteriores\n");
-        printf("d: 10 Canciones siguientes \n");
-        printf("q: Agregar a la cola una cancion de la lista\n");
-        printf("r: Reproducir una cancion\n");
-        printf("Selecciona una opcion: ");
-        getchar();
-        scanf("%c",&opcionCanciones);
+        ptr2=fopen("Registrocan.txt","ab+");
+                  if(ptr2 == NULL)
+                  {
+                    printf("Error al abrir el archivo\n");
+                    main();
+                    break;
+                  }
+                  vaciarLista(&listaTemporal);
+                  while(!feof(ptr2))
+                    {
+                      fread(&est_can,sizeof(est_can),1,ptr2);
+                      insertarLista(&listaTemporal,est_can);
+                      insertarArtistas(listaTemporal);
+                    }
         
-        switch (opcionCanciones)
-        {
-          case 'p': 
-          break;
-          case 'a': printf("10 Canciones anteriores...");
-          break;
-          case 'd': printf("10 Canciones siguientes...");
-          break;
-          case 'q': printf("Agregar a la cola una cancion de la lista...");
-          break;
-          case 'r': printf("Reproducir una cancion...");
-          break;
-          
-          default:
-          break;
-        }
+        system("clear"); 
+        while(opcionCanciones!=6)
+          {       
+            printf("\tLista de canciones\n");
+            printf("---------------------------------------------\n");
+            printf("1. Con paginacion de 10\n");
+            printf("2. Agrupadas por categoria\n");
+            printf("3: Top 5 canciones mas reproducidas \n");
+            printf("4: Ordenadas por puntaje\n");
+            printf("5: Lista que maximiza el numero de canciones\n");
+            printf("   que se pueden escuchar en un tiempo t\n");
+            printf("6: Regresar al menu principal\n");
+            printf("---------------------------------------------\n");
+            printf("Selecciona una opcion: ");
+            scanf("%d",&opcionCanciones);
+            system("clear");
+            switch (opcionCanciones)
+            {
+              case 1:
+                {
+                  char c;
+                  c = '_';  
+                  while(c!='c'){  
+                    system("clear");
+                    printf("\tPaginación\n");
+                    printf("--------------------------------------\n");
+                    
+                    //lista canciones
+                    //impresion10(listaTemporal);
+                    //fseek(fp, 0, SEEK_SET);
+                    //impresionFile10(fp);
+                    
+                    printf("\na) Cancion siguiente\n");
+                    printf("\nb) Cancion anterior\n");
+                    scanf("%s",&c);
+                    
+                    switch(c)
+                      {
+                        case 'a':
+                          {
+                            vaciarLista(&listaTemporal);
+                            printf("\n10 Canciones Siguientes...\n\n");
+                            //result = fseek(fp, -(sizeof(est_can) * 10), SEEK_CUR);
+                            /*if( result )
+                            {
+                              fseek(fp, 0, SEEK_SET);
+                            }*/
+                          for (i = 0; i < 10; i++)
+                            {
+                              fread(&est_can, sizeof(est_can), 1, fp);
+                              if(feof(fp))
+                                {
+                                fseek(fp, 0, SEEK_END);
+                                break;
+                                }
+                              insertarLista(&listaTemporal, est_can);
+                              insertarArtistas(listaTemporal);
+                            }
+                            impresion(listaTemporal);
+                            //////////////////////////////////////////////////////paro
+                            int yy;
+                            scanf("%d",&yy);
+                            break;
+                          }
+                        case 'b':
+                          {
+                            vaciarLista(&listaTemporal);
+                            printf("\n10 Canciones Anteriores...\n\n");
+                            result = fseek(fp, -(sizeof(est_can) * 10), SEEK_CUR);
+                            if( result )
+                            {
+                              fseek(fp, 0, SEEK_SET);
+                            }
+                          for (i = 0; i < 10; i++)
+                            {
+                              fread(&est_can, sizeof(est_can), 1, fp);
+                              if(feof(fp))
+                                {
+                                fseek(fp, 0, SEEK_END);
+                                break;
+                                }
+                              insertarLista(&listaTemporal, est_can);
+                              insertarArtistas(listaTemporal);
+                            }
+                            result = fseek(fp, -(sizeof(est_can) * 10), SEEK_CUR);
+                            impresion(listaTemporal);
+                            int xx;
+                            scanf("%d",&xx);
+                            break;
+                          }
+                        default:
+                          break;
+                      }
+
+                  }
+                  break;
+                }
+                break;
+              case 2:
+                {
+                  impresionGeneros(listaGenero);
+                  int xx;
+                  scanf("%d",&xx);
+                  break;
+                }
+              default:
+                  break;
+            }
+          }
         break;
       }
       //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -509,7 +766,7 @@ int main ()
       
           switch (opcionReproductor)
           {
-            case 'p': main();
+            case 'p': 
             break;
             case 'a': printf("Cancion anterior...");
             break;
